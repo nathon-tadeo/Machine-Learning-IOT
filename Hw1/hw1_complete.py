@@ -18,6 +18,8 @@ list_of_heights_cm = [175, 162, 178, 182]
 for name in list_of_names:
     print("The name {:} is {:} letters long".format(name, len(name)))
 
+name_lengths = [len(name) for name in list_of_names]
+print(name_lengths)
 
 ########################################
 # Here's the information for the second part, involving the linear
