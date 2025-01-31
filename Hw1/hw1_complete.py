@@ -5,8 +5,9 @@ import sklearn
 
 from sklearn.datasets import load_iris
 
-rng = np.random.default_rng(2022)
+from person import person
 
+rng = np.random.default_rng(2022)
 
 ## Here's the information needed to do the first few tasks,
 # which will give you some practice with basic Python methods
@@ -20,6 +21,35 @@ for name in list_of_names:
 
 name_lengths = [len(name) for name in list_of_names]
 print(name_lengths)
+
+# E. import person
+people = {
+    name: person(name, age, height)
+    for name, age, height in zip(list_of_names, list_of_ages, list_of_heights_cm)
+}
+
+for name, person in people.items():
+    print(person)
+
+# F. Array of ages and heights
+ages_array = np.array(list_of_ages)
+heights_array = np.array(list_of_heights_cm)
+
+# G. Average age
+average_age = np.mean(list_of_ages)
+print(average_age)
+
+# H. Create Scatter Plot age vs height
+plt.figure(figsize=(6, 6), dpi=100)
+plt.scatter(ages_array, heights_array, color="red", marker="x", label="People")
+
+plt.xlabel("Age (Yrs)")
+plt.ylabel("Height (CM)")
+plt.title("Age vs. Height")
+plt.grid(True)
+plt.legend()
+
+plt.savefig("age_vs_height.png")
 
 ########################################
 # Here's the information for the second part, involving the linear
@@ -91,3 +121,56 @@ def evaluate_classifier(cls_func, x_data, labels, print_confusion_matrix=True):
 ## Now evaluate the classifier we've built.  This will evaluate the
 # random classifier, which should have accuracy around 33%.
 acc, cm = evaluate_classifier(classify_rand, x_data.to_numpy(), y_labels.to_numpy())
+
+# J. Define the classify_iris function
+W = np.array([[0.5, -0.2, 0.3, 0.1], [-0.5, 0.8, -0.5, 0.5], [0.1, -0.4, 0.6, 0.7]])
+
+b = np.array([0.1, 0.5, 1])
+
+
+def classify_iris(x):
+    y = np.matmul(W, x) + b
+    return np.argmax(y)
+
+
+acc, cm = evaluate_classifier(classify_iris, x_data.to_numpy(), y_labels.to_numpy())
+
+# M. TF/Keras classifier
+import tensorflow as tf
+from tensorflow.keras import layers, models
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+
+# Normalize the data
+scaler = StandardScaler()
+x_data_normalized = scaler.fit_transform(x_data)
+
+# One-hot encode the labels (since it's a multi-class classification)
+y_labels_onehot = tf.keras.utils.to_categorical(y_labels, num_classes=3)
+
+# Split the data into training and testing sets
+x_train, x_test, y_train, y_test = train_test_split(
+    x_data_normalized, y_labels_onehot, test_size=0.3, random_state=0
+)
+
+tf_model = models.Sequential()
+
+# Input layer
+tf_model.add(layers.InputLayer(input_shape=(x_train.shape[1],)))
+# First hidden layer with ReLU activation
+tf_model.add(layers.Dense(64, activation="relu"))
+tf_model.add(layers.Dense(32, activation="relu"))
+tf_model.add(layers.Dense(3, activation="softmax"))  # 3 classes in the Iris dataset
+
+
+tf_model.compile(
+    optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"]
+)
+
+# Train the model
+history = tf_model.fit(x_train, y_train, epochs=10, batch_size=8, verbose=1)
+
+# Evaluate the model on the test set (testing on the training set is generally not recommended)
+test_loss, test_acc = tf_model.evaluate(x_test, y_test)
+
+print(f"Test Accuracy: {test_acc * 100:.2f}%")
