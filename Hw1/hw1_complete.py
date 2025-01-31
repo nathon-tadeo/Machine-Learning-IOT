@@ -19,10 +19,11 @@ list_of_heights_cm = [175, 162, 178, 182]
 for name in list_of_names:
     print("The name {:} is {:} letters long".format(name, len(name)))
 
+# B. Name list comprehension
 name_lengths = [len(name) for name in list_of_names]
 print(name_lengths)
 
-# E. import person
+# E. Import person
 people = {
     name: person(name, age, height)
     for name, age, height in zip(list_of_names, list_of_ages, list_of_heights_cm)
@@ -61,6 +62,7 @@ x_data = iris_db["data"]
 y_labels = iris_db["target"]  # correct numeric labels
 target_names = iris_db["target_names"]  # string names
 
+'''
 # Here's a starter example of plotting the data
 fig = plt.figure(figsize=(6, 6), dpi=100, facecolor="w", edgecolor="k")
 l_colors = ["maroon", "darkgreen", "blue"]
@@ -80,7 +82,7 @@ plt.tight_layout()
 # interactive mode -- plt.ion() --  in iPython
 # plt.show()
 plt.savefig("iris_data.png")
-
+'''
 
 ## A trivial example classifier.  You'll copy and modify this to
 # perform a linear classification function.
@@ -138,39 +140,20 @@ acc, cm = evaluate_classifier(classify_iris, x_data.to_numpy(), y_labels.to_nump
 # M. TF/Keras classifier
 import tensorflow as tf
 from tensorflow.keras import layers, models
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
 
-# Normalize the data
-scaler = StandardScaler()
-x_data_normalized = scaler.fit_transform(x_data)
+tf_model = models.Sequential([
+    layers.InputLayer(input_shape=(4,)),   
+    layers.Dense(10, activation='relu'),   
+    layers.Dense(3, activation='softmax')
+])
 
-# One-hot encode the labels (since it's a multi-class classification)
-y_labels_onehot = tf.keras.utils.to_categorical(y_labels, num_classes=3)
-
-# Split the data into training and testing sets
-x_train, x_test, y_train, y_test = train_test_split(
-    x_data_normalized, y_labels_onehot, test_size=0.3, random_state=0
-)
-
-tf_model = models.Sequential()
-
-# Input layer
-tf_model.add(layers.InputLayer(input_shape=(x_train.shape[1],)))
-# First hidden layer with ReLU activation
-tf_model.add(layers.Dense(64, activation="relu"))
-tf_model.add(layers.Dense(32, activation="relu"))
-tf_model.add(layers.Dense(3, activation="softmax"))  # 3 classes in the Iris dataset
-
-
-tf_model.compile(
-    optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"]
-)
+tf_model.compile(optimizer='adam',
+                  loss='sparse_categorical_crossentropy',
+                  metrics=['accuracy'])
 
 # Train the model
-history = tf_model.fit(x_train, y_train, epochs=10, batch_size=8, verbose=1)
+tf_model.fit(x_data, y_labels, epochs=100, batch_size=32)
 
-# Evaluate the model on the test set (testing on the training set is generally not recommended)
-test_loss, test_acc = tf_model.evaluate(x_test, y_test)
+test_loss, test_acc = tf_model.evaluate(x_data, y_labels)
 
 print(f"Test Accuracy: {test_acc * 100:.2f}%")
