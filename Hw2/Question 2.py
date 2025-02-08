@@ -11,7 +11,7 @@ input_size = 32  # Initial input size 32x32
 input_channels = 3  # Initial channels RGB
 results = []
 
-# (Layer, filter size, kernel, stride, padding)
+# (Layer, filter size, kernel, stride, padding) aa
 layers = [
     ("Conv2D", 32, 3, 2, "same"),
     ("BatchNorm", 0, 0, 0, 0),
