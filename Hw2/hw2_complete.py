@@ -11,6 +11,7 @@ from tensorflow import keras
 from tensorflow.keras import layers, models
 from tensorflow.keras.datasets import cifar10
 from tensorflow.keras.preprocessing import image
+from tensorflow.keras.models import load_model
 
 def build_model1():
     model = keras.Sequential([
@@ -38,8 +39,6 @@ def build_model1():
         layers.BatchNormalization(),
         layers.Dense(10, activation='softmax')
     ])
-    
-    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
     return model
 
 def build_model2():
@@ -68,7 +67,6 @@ def build_model2():
         layers.BatchNormalization(),
         layers.Dense(10, activation='softmax')
     ])
-    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
     return model
 
 def build_model3():
@@ -109,7 +107,6 @@ def build_model3():
     x = layers.Dense(10, activation='softmax')(x)
     
     model = keras.Model(inputs, x)
-    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
     return model
 
 
@@ -132,110 +129,130 @@ def build_model50k():
         layers.BatchNormalization(),
         layers.Dense(10, activation='softmax')
     ])
-    
-    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
     return model
 
 
 # no training or dataset construction should happen above this line
 if __name__ == "__main__":
     ########################################
-    ## Add code here to Load the CIFAR10 data set
-# Load CIFAR-10 dataset
-    (x_train, y_train), (test_images, test_labels) = keras.datasets.cifar10.load_data()
+    ## Load the CIFAR-10 dataset and split
+    (train_images, train_labels), (test_images, test_labels) = tf.keras.datasets.cifar10.load_data()
 
-# Normalize images to [0, 1] range
-    x_train, test_images = x_train / 255.0, test_images / 255.0
+    # Normalize images
+    train_images, test_images = train_images / 255.0, test_images / 255.0
 
-# Split training set into training and validation subsets
+    train_labels = train_labels.squeeze()
+    test_labels = test_labels.squeeze()
+
+    # Split training data into training and validation sets
     train_images, val_images, train_labels, val_labels = train_test_split(
-    x_train, y_train, test_size=0.2, random_state=42, stratify=y_train
-)
+        train_images, train_labels, test_size=0.2, random_state=42, stratify=train_labels
+    )
 
     ########################################
     ## Build and train model 1
-model1 = build_model1()
-model1.summary()
-    # Compile and train model 1.
-history = model1.fit(train_images, train_labels, epochs=50, validation_data=(val_images, val_labels))
+    model1 = build_model1()
+    model1.summary()
+    # Compile and train Model 1
+    model1.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    
+    # Ensure train_images is accessible
+    print(f"train_images shape: {train_images.shape}")  # Debugging step
+    history = model1.fit(train_images, train_labels, epochs=50, validation_data=(val_images, val_labels))
 
-# Evaluate on test data
-test_loss, test_acc = model1.evaluate(test_images, test_labels)
-
-# Print final accuracies
-train_acc = history.history['accuracy'][-1]
-val_acc = history.history['val_accuracy'][-1]
-print(f"Final Training Accuracy: {train_acc:.4f}")
-print(f"Final Validation Accuracy: {val_acc:.4f}")
-print(f"Final Test Accuracy: {test_acc:.4f}")
+    # Evaluate on test data
+    test_loss, test_acc = model1.evaluate(test_images, test_labels)
+    # Print final accuracies
+    train_acc = history.history['accuracy'][-1]
+    val_acc = history.history['val_accuracy'][-1]
+    print(f"Final Training Accuracy: {train_acc:.4f}")
+    print(f"Final Validation Accuracy: {val_acc:.4f}")
+    print(f"Final Test Accuracy: {test_acc:.4f}")
 
     ## Build, compile, and train model 2 (DS Convolutions)
-model2 = build_model2()
-model2.summary()
-    # Compile and train model 2.
-history = model2.fit(train_images, train_labels, epochs=50, validation_data=(val_images, val_labels))
+    model2 = build_model2()
+    model2.summary()
+    # Compile and train Model 2
+    model2.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    
+    # Ensure train_images is accessible
+    print(f"train_images shape: {train_images.shape}")  # Debugging step
+    history = model2.fit(train_images, train_labels, epochs=50, validation_data=(val_images, val_labels))
+    model1.save("model1.h5")  # Save after training
 
-# Evaluate on test data
-test_loss, test_acc = model2.evaluate(test_images, test_labels)
-
-# Print final accuracies
-train_acc = history.history['accuracy'][-1]
-val_acc = history.history['val_accuracy'][-1]
-print(f"Final Training Accuracy: {train_acc:.4f}")
-print(f"Final Validation Accuracy: {val_acc:.4f}")
-print(f"Final Test Accuracy: {test_acc:.4f}")
-
-    ### Repeat for model 3 and your best sub-50k params model
-model3 = build_model3()
-model3.summary()
-    # Compile and train model 3.
-history = model3.fit(train_images, train_labels, epochs=50, validation_data=(val_images, val_labels))
-
-# Evaluate on test data
-test_loss, test_acc = model3.evaluate(test_images, test_labels)
-
-# Print final accuracies
-train_acc = history.history['accuracy'][-1]
-val_acc = history.history['val_accuracy'][-1]
-print(f"Final Training Accuracy: {train_acc:.4f}")
-print(f"Final Validation Accuracy: {val_acc:.4f}")
-print(f"Final Test Accuracy: {test_acc:.4f}")
+    # Evaluate on test data
+    test_loss, test_acc = model2.evaluate(test_images, test_labels)
+    # Print final accuracies
+    train_acc = history.history['accuracy'][-1]
+    val_acc = history.history['val_accuracy'][-1]
+    print(f"Final Training Accuracy: {train_acc:.4f}")
+    print(f"Final Validation Accuracy: {val_acc:.4f}")
+    print(f"Final Test Accuracy: {test_acc:.4f}")
 
     ### Repeat for model 3 and your best sub-50k params model
-model50k = build_model50k()
-model50k.summary()
-    # Compile and train model 3.
-history = model50k.fit(train_images, train_labels, epochs=50, validation_data=(val_images, val_labels))
+    model3 = build_model3()
+    model3.summary()
+    # Compile and train Model 3
+    model3.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    
+    # Ensure train_images is accessible
+    print(f"train_images shape: {train_images.shape}")  # Debugging step
+    history = model3.fit(train_images, train_labels, epochs=50, validation_data=(val_images, val_labels))
 
-# Evaluate on test data
-test_loss, test_acc = model50k.evaluate(test_images, test_labels)
+    # Evaluate on test data
+    test_loss, test_acc = model3.evaluate(test_images, test_labels)
+    # Print final accuracies
+    train_acc = history.history['accuracy'][-1]
+    val_acc = history.history['val_accuracy'][-1]
+    print(f"Final Training Accuracy: {train_acc:.4f}")
+    print(f"Final Validation Accuracy: {val_acc:.4f}")
+    print(f"Final Test Accuracy: {test_acc:.4f}")
 
-# Print final accuracies
-train_acc = history.history['accuracy'][-1]
-val_acc = history.history['val_accuracy'][-1]
-print(f"Final Training Accuracy: {train_acc:.4f}")
-print(f"Final Validation Accuracy: {val_acc:.4f}")
-print(f"Final Test Accuracy: {test_acc:.4f}")
+
+    ## Build, compile, and train model sub-50k
+    model50k = build_model50k()
+    model50k.summary()
+    # Compile and train Model 1
+    model50k.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    
+    # Ensure train_images is accessible
+    print(f"train_images shape: {train_images.shape}")  # Debugging step
+    history = model50k.fit(train_images, train_labels, epochs=50, validation_data=(val_images, val_labels))
+
+    # Evaluate on test data
+    test_loss, test_acc = model50k.evaluate(test_images, test_labels)
+    # Print final accuracies
+    train_acc = history.history['accuracy'][-1]
+    val_acc = history.history['val_accuracy'][-1]
+    print(f"Final Training Accuracy: {train_acc:.4f}")
+    print(f"Final Validation Accuracy: {val_acc:.4f}")
+    print(f"Final Test Accuracy: {test_acc:.4f}")
 
 ########################################
-    # Load the image
+'''
+# Load trained model before prediction
+model1 = load_model("model1.h5")
+
+# Load the image
 img_path = "test_image_dog.png"  # Replace with actual image filename
 img = image.load_img(img_path, target_size=(32, 32))
 
-    # Convert image to array and normalize
+# Convert image to array and normalize
 img_array = image.img_to_array(img) / 255.0
 img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
 
-    # Predict using the trained model
+# Predict using the trained model
 predictions = model1.predict(img_array)
 predicted_class = np.argmax(predictions)
 
-    # CIFAR-10 class labels
+# CIFAR-10 class labels
 class_labels = ['airplane', 'automobile', 'bird', 'cat', 'deer', 
-                    'dog', 'frog', 'horse', 'ship', 'truck']
+                'dog', 'frog', 'horse', 'ship', 'truck']
 
 predicted_label = class_labels[predicted_class]
 expected_class = "dog" 
+
 print(f"Predicted class: {predicted_label}")
 print(f"Correct label: {expected_class}")
 print(f"Prediction correct? {predicted_label == expected_class}")
+'''
