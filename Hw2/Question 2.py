@@ -1,17 +1,16 @@
 import pandas as pd
 import numpy as np
 
-
 # Function to compute output shape after a convolution layer
 def conv_output_shape(input_size, kernel_size, stride, padding):
     return np.floor((input_size + 2 * padding - kernel_size) / stride + 1).astype(int)
 
 # CNN layer details (input size = 32x32x3)
-input_size = 32  # Initial input size 32x32
-input_channels = 3  # Initial channels RGB
+input_size = 32 
+input_channels = 3  
 results = []
 
-# (Layer, filter size, kernel, stride, padding) aa
+# (Layer, filter size, kernel, stride, padding)
 layers = [
     ("Conv2D", 32, 3, 2, "same"),
     ("BatchNorm", 0, 0, 0, 0),
@@ -46,11 +45,7 @@ for layer in layers:
         output_size = conv_output_shape(
             input_size, kernel_size, stride, 1 if padding == "same" else 0
         )
-
-        # Compute number of parameters (weights + biases)
         num_params = (kernel_size * kernel_size * input_channels * filters) + filters
-
-        # Compute MACs (parameters * output feature map size)
         macs = num_params * (output_size**2)
 
         # Update input for next layer
@@ -58,23 +53,23 @@ for layer in layers:
         input_channels = filters
 
     elif layer_type == "MaxPool":
-        output_size = input_size // stride
-        num_params = 0  # No parameters in pooling
+        output_size = input_size // kernel_size  # Corrected pooling size calculation
+        num_params = 0  
         macs = 0
 
     elif layer_type == "Flatten":
         num_params = 0
         macs = 0
-        output_size = input_size * input_size * input_channels  # Flattened size
+        output_size = input_size * input_size * input_channels  # Flattened feature map size
 
     elif layer_type == "Dense":
-        num_params = input_size * filters + filters  # Fully connected layer
+        num_params = input_size * filters + filters  # Fully connected layer parameter count
         macs = num_params
         output_size = filters
         input_size = filters  # Next layer input
 
     else:  # BatchNorm
-        num_params = 2 * input_channels  # Scale & shift params
+        num_params = 4 * input_channels  # Corrected batch norm parameters
         macs = 0
         output_size = input_size
 
