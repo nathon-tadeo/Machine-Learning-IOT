@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-# Helper libraries 1
+# Helper libraries
 import numpy as np
 import matplotlib.pyplot as plt
 

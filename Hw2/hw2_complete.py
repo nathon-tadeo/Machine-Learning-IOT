@@ -71,41 +71,59 @@ def build_model2():
 
 def build_model3():
     inputs = keras.Input(shape=(32, 32, 3))
-    
+
+    # Initial convolution layer (no residual connection)
     x = layers.Conv2D(32, (3, 3), strides=2, padding="same", activation='relu')(inputs)
     x = layers.BatchNormalization()(x)
-    
-    # First residual block
+
+    # First residual block (Conv2D → BatchNorm → Dropout) x2
     residual = x
     x = layers.Conv2D(64, (3, 3), strides=2, padding="same", activation='relu')(x)
     x = layers.BatchNormalization()(x)
+    x = layers.Dropout(0.3)(x)
+
     x = layers.Conv2D(64, (3, 3), padding="same", activation='relu')(x)
     x = layers.BatchNormalization()(x)
-    
+    x = layers.Dropout(0.3)(x)
+
     # Skip connection
-    residual = layers.Conv2D(64, (1, 1), strides=2, padding="same")(residual)  # Adjust channel size
+    residual = layers.Conv2D(64, (1, 1), strides=2, padding="same")(residual)
     x = layers.Add()([x, residual])
-    
+
+    # Second residual block (Conv2D → BatchNorm → Dropout) x2
+    residual = x
     x = layers.Conv2D(128, (3, 3), strides=2, padding="same", activation='relu')(x)
     x = layers.BatchNormalization()(x)
-    x = layers.Dropout(0.3)(x)  # Dropout added
-    
-    # Second residual block
+    x = layers.Dropout(0.3)(x)
+
+    x = layers.Conv2D(128, (3, 3), padding="same", activation='relu')(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Dropout(0.3)(x)
+
+    # Skip connection
+    residual = layers.Conv2D(128, (1, 1), strides=2, padding="same")(residual)
+    x = layers.Add()([x, residual])
+
+    # Third residual block (Conv2D → BatchNorm → Dropout) x2
     residual = x
     x = layers.Conv2D(128, (3, 3), padding="same", activation='relu')(x)
     x = layers.BatchNormalization()(x)
+    x = layers.Dropout(0.3)(x)
+
     x = layers.Conv2D(128, (3, 3), padding="same", activation='relu')(x)
     x = layers.BatchNormalization()(x)
-    
+    x = layers.Dropout(0.3)(x)
+
     # Skip connection
     x = layers.Add()([x, residual])
-    
+
+    # Pooling & Fully Connected Layers
     x = layers.MaxPooling2D(pool_size=(4, 4), strides=4)(x)
     x = layers.Flatten()(x)
     x = layers.Dense(128, activation='relu')(x)
     x = layers.BatchNormalization()(x)
     x = layers.Dense(10, activation='softmax')(x)
-    
+
     model = keras.Model(inputs, x)
     return model
 
@@ -158,7 +176,7 @@ if __name__ == "__main__":
     
     # Ensure train_images is accessible
     print(f"train_images shape: {train_images.shape}")  # Debugging step
-    history = model1.fit(train_images, train_labels, epochs=50, validation_data=(val_images, val_labels))
+    history = model1.fit(train_images, train_labels, epochs=1, validation_data=(val_images, val_labels))
 
     # Evaluate on test data
     test_loss, test_acc = model1.evaluate(test_images, test_labels)
@@ -177,7 +195,7 @@ if __name__ == "__main__":
     
     # Ensure train_images is accessible
     print(f"train_images shape: {train_images.shape}")  # Debugging step
-    history = model2.fit(train_images, train_labels, epochs=50, validation_data=(val_images, val_labels))
+    history = model2.fit(train_images, train_labels, epochs=1, validation_data=(val_images, val_labels))
     model1.save("model1.h5")  # Save after training
 
     # Evaluate on test data
@@ -197,7 +215,7 @@ if __name__ == "__main__":
     
     # Ensure train_images is accessible
     print(f"train_images shape: {train_images.shape}")  # Debugging step
-    history = model3.fit(train_images, train_labels, epochs=50, validation_data=(val_images, val_labels))
+    history = model3.fit(train_images, train_labels, epochs=1, validation_data=(val_images, val_labels))
 
     # Evaluate on test data
     test_loss, test_acc = model3.evaluate(test_images, test_labels)
@@ -208,16 +226,15 @@ if __name__ == "__main__":
     print(f"Final Validation Accuracy: {val_acc:.4f}")
     print(f"Final Test Accuracy: {test_acc:.4f}")
 
-
     ## Build, compile, and train model sub-50k
     model50k = build_model50k()
     model50k.summary()
-    # Compile and train Model 1
+    # Compile and train Model 50k
     model50k.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
     
     # Ensure train_images is accessible
     print(f"train_images shape: {train_images.shape}")  # Debugging step
-    history = model50k.fit(train_images, train_labels, epochs=50, validation_data=(val_images, val_labels))
+    history = model50k.fit(train_images, train_labels, epochs=1, validation_data=(val_images, val_labels))
 
     # Evaluate on test data
     test_loss, test_acc = model50k.evaluate(test_images, test_labels)
@@ -227,6 +244,7 @@ if __name__ == "__main__":
     print(f"Final Training Accuracy: {train_acc:.4f}")
     print(f"Final Validation Accuracy: {val_acc:.4f}")
     print(f"Final Test Accuracy: {test_acc:.4f}")
+    model50k.save("best_model.h5")
 
 ########################################
 '''
