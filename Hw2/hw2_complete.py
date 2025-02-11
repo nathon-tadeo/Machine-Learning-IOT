@@ -75,18 +75,19 @@ def build_model3():
     # Initial convolution layer (no residual connection)
     x = layers.Conv2D(32, (3, 3), strides=2, padding="same", activation='relu')(inputs)
     x = layers.BatchNormalization()(x)
+    x = layers.Dropout(0.2)(x)  # Added dropout
 
     # First residual block (Conv2D → BatchNorm → Dropout) x2
     residual = x
     x = layers.Conv2D(64, (3, 3), strides=2, padding="same", activation='relu')(x)
     x = layers.BatchNormalization()(x)
-    x = layers.Dropout(0.3)(x)
+    x = layers.Dropout(0.2)(x)  # Added dropout
 
     x = layers.Conv2D(64, (3, 3), padding="same", activation='relu')(x)
     x = layers.BatchNormalization()(x)
-    x = layers.Dropout(0.3)(x)
+    x = layers.Dropout(0.2)(x)  # Added dropout
 
-    # Skip connection
+    # Skip connection (1x1 conv to match channels)
     residual = layers.Conv2D(64, (1, 1), strides=2, padding="same")(residual)
     x = layers.Add()([x, residual])
 
@@ -94,13 +95,13 @@ def build_model3():
     residual = x
     x = layers.Conv2D(128, (3, 3), strides=2, padding="same", activation='relu')(x)
     x = layers.BatchNormalization()(x)
-    x = layers.Dropout(0.3)(x)
+    x = layers.Dropout(0.2)(x)  # Added dropout
 
     x = layers.Conv2D(128, (3, 3), padding="same", activation='relu')(x)
     x = layers.BatchNormalization()(x)
-    x = layers.Dropout(0.3)(x)
+    x = layers.Dropout(0.2)(x)  # Added dropout
 
-    # Skip connection
+    # Skip connection (1x1 conv to match channels)
     residual = layers.Conv2D(128, (1, 1), strides=2, padding="same")(residual)
     x = layers.Add()([x, residual])
 
@@ -108,13 +109,13 @@ def build_model3():
     residual = x
     x = layers.Conv2D(128, (3, 3), padding="same", activation='relu')(x)
     x = layers.BatchNormalization()(x)
-    x = layers.Dropout(0.3)(x)
+    x = layers.Dropout(0.2)(x)  # Added dropout
 
     x = layers.Conv2D(128, (3, 3), padding="same", activation='relu')(x)
     x = layers.BatchNormalization()(x)
-    x = layers.Dropout(0.3)(x)
+    x = layers.Dropout(0.2)(x)  # Added dropout
 
-    # Skip connection
+    # Skip connection (no need for 1x1 conv since channel counts match)
     x = layers.Add()([x, residual])
 
     # Pooling & Fully Connected Layers
@@ -122,11 +123,11 @@ def build_model3():
     x = layers.Flatten()(x)
     x = layers.Dense(128, activation='relu')(x)
     x = layers.BatchNormalization()(x)
+    x = layers.Dropout(0.2)(x)  # Added dropout
     x = layers.Dense(10, activation='softmax')(x)
 
     model = keras.Model(inputs, x)
     return model
-
 
 def build_model50k():
     model = keras.Sequential([
@@ -147,6 +148,7 @@ def build_model50k():
         layers.BatchNormalization(),
         layers.Dense(10, activation='softmax')
     ])
+    model.save("best_model.h5")
     return model
 
 
@@ -196,7 +198,6 @@ if __name__ == "__main__":
     # Ensure train_images is accessible
     print(f"train_images shape: {train_images.shape}")  # Debugging step
     history = model2.fit(train_images, train_labels, epochs=1, validation_data=(val_images, val_labels))
-    model1.save("model1.h5")  # Save after training
 
     # Evaluate on test data
     test_loss, test_acc = model2.evaluate(test_images, test_labels)
@@ -230,12 +231,14 @@ if __name__ == "__main__":
     model50k = build_model50k()
     model50k.summary()
     # Compile and train Model 50k
-    model50k.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    model50k.compile(optimizer=tf.keras.optimizers.legacy.Adam(),
+              loss='mean_squared_error'
+             )
     
     # Ensure train_images is accessible
     print(f"train_images shape: {train_images.shape}")  # Debugging step
     history = model50k.fit(train_images, train_labels, epochs=1, validation_data=(val_images, val_labels))
-
+    
     # Evaluate on test data
     test_loss, test_acc = model50k.evaluate(test_images, test_labels)
     # Print final accuracies
@@ -244,8 +247,7 @@ if __name__ == "__main__":
     print(f"Final Training Accuracy: {train_acc:.4f}")
     print(f"Final Validation Accuracy: {val_acc:.4f}")
     print(f"Final Test Accuracy: {test_acc:.4f}")
-    model50k.save("best_model.h5")
-
+    
 ########################################
 '''
 # Load trained model before prediction
