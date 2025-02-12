@@ -140,15 +140,18 @@ def build_model50k():
         layers.SeparableConv2D(64, (3, 3), strides=2, padding="same", activation='relu'),
         layers.BatchNormalization(),
         
-        layers.SeparableConv2D(64, (3, 3), padding="same", activation='relu'),
+        layers.SeparableConv2D(128, (3, 3), padding="same", activation='relu'),
         layers.BatchNormalization(),
         
-        layers.GlobalAveragePooling2D(),  # Reduces parameters
+        layers.GlobalAveragePooling2D(),
+        
         layers.Dense(128, activation='relu'),
         layers.BatchNormalization(),
+        layers.Dropout(0.3),
+        
         layers.Dense(10, activation='softmax')
     ])
-    model.save("best_model.h5")
+    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
     return model
 
 
@@ -220,9 +223,9 @@ if __name__ == "__main__":
 
     # Evaluate on test data
     test_loss, test_acc = model3.evaluate(test_images, test_labels)
-    # Print final accuracies
     train_acc = history.history['accuracy'][-1]
     val_acc = history.history['val_accuracy'][-1]
+    
     print(f"Final Training Accuracy: {train_acc:.4f}")
     print(f"Final Validation Accuracy: {val_acc:.4f}")
     print(f"Final Test Accuracy: {test_acc:.4f}")
@@ -230,24 +233,16 @@ if __name__ == "__main__":
     ## Build, compile, and train model sub-50k
     model50k = build_model50k()
     model50k.summary()
-    # Compile and train Model 50k
-    model50k.compile(optimizer=tf.keras.optimizers.legacy.Adam(),
-              loss='mean_squared_error'
-             )
-    
-    # Ensure train_images is accessible
-    print(f"train_images shape: {train_images.shape}")  # Debugging step
+    model50k.fit(train_images, train_labels, epochs=50, validation_data=(val_images, val_labels), batch_size=64)
     history = model50k.fit(train_images, train_labels, epochs=1, validation_data=(val_images, val_labels))
-    
-    # Evaluate on test data
     test_loss, test_acc = model50k.evaluate(test_images, test_labels)
-    # Print final accuracies
     train_acc = history.history['accuracy'][-1]
     val_acc = history.history['val_accuracy'][-1]
+    
     print(f"Final Training Accuracy: {train_acc:.4f}")
     print(f"Final Validation Accuracy: {val_acc:.4f}")
     print(f"Final Test Accuracy: {test_acc:.4f}")
-    
+    model50k.save("best_model.h5")
 ########################################
 '''
 # Load trained model before prediction
