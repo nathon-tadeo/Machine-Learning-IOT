@@ -1,0 +1,2 @@
+All python code, notebooks, resources used for constructing and training the model, processing data, etc.
+Should also include the quantization/conversion script used to convert your floating-point keras model into tflite.
