@@ -1,2 +1,1 @@
-# project_kws
-Template for keyword spotting project for embedded ML class.
+Project 2 for ECGR 4127/5127 Machine Learning for the IoT
